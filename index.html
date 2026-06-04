@@ -39,10 +39,19 @@ body.dark{
 
 /* Base mobile fixes */
 *{-webkit-tap-highlight-color:transparent;}
-html,body{width:100%;overflow-x:hidden;}
+html,body{width:100%;overflow-x:hidden;max-width:100vw;}
 
 /* Content max width */
-.cnt{padding:12px;max-width:100%;margin:0 auto;}
+.cnt{padding:12px;max-width:100%;margin:0 auto;overflow-x:hidden;box-sizing:border-box;}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:13px;margin-bottom:12px;box-shadow:var(--sh);overflow:hidden;width:100%;box-sizing:border-box;}
+
+/* Stats grid - always 2 cols on mobile */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:11px 12px;box-shadow:var(--sh);overflow:hidden;}
+.stat-val{font-size:14px;font-weight:600;font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.stat-lbl{font-size:9px;color:var(--muted);font-weight:500;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* Header compact on mobile */
 .hdr{padding:36px 14px 0;}
@@ -138,8 +147,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 /* ── TABS ── */
 .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
 .tabs::-webkit-scrollbar{display:none;}
-.tb{flex-shrink:0;padding:13px 15px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.5px;transition:color .2s;}
+.tb{flex-shrink:0;padding:11px 10px;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;font-size:10px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;transition:color .2s;}
 .tb.on{color:var(--green);border-bottom-color:var(--green);}
+/* On very small screens use shorter labels via data-short */
+@media(max-width:400px){
+  .tb{font-size:9px;padding:11px 8px;letter-spacing:0;}
+}
 
 /* ── CONTENT ── */
 .cnt{padding:16px;max-width:500px;margin:0 auto;}
@@ -189,11 +202,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .sav-input:focus{border-color:var(--green);background:var(--surface);}
 
 /* ── ITEMS ── */
-.item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--border);margin-bottom:7px;background:var(--surface);}
-.item-l{flex:1;min-width:0;}
-.item-desc{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.item-sub{font-size:10px;color:var(--muted);margin-top:1px;}
-.item-r{display:flex;align-items:center;gap:6px;margin-left:6px;flex-shrink:0;}
+.item{display:flex;align-items:center;padding:8px 10px;border-radius:10px;border:1px solid var(--border);margin-bottom:6px;background:var(--surface);gap:5px;width:100%;box-sizing:border-box;overflow:hidden;}
+.item-l{flex:1;min-width:0;overflow:hidden;}
+.item-desc{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.item-sub{font-size:9px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.item-r{display:flex;align-items:center;gap:3px;flex-shrink:0;}
 .iamt{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500;cursor:pointer;border-bottom:1px dashed currentColor;padding-bottom:1px;}
 
 /* ── EDIT MODAL ── */
@@ -370,25 +383,24 @@ hr.div{border:none;border-top:1px solid var(--border);margin:8px 0;}
 
 <div class="hdr">
   <div class="hdr-top">
-    <div>
+    <div style="min-width:0;flex:1">
       <div class="hdr-title">Finanzas</div>
       <div class="hdr-sub">Ivan & Noelia · <span id="syncStatus">conectando...</span></div>
     </div>
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-      <button id="darkBtn" onclick="toggleDark()" title="Modo oscuro" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;width:34px;height:34px;font-size:16px;cursor:pointer;flex-shrink:0;">🌙</button>
-      <!-- MINI RESUMEN -->
-      <div style="display:flex;gap:5px;align-items:stretch">
-        <div style="background:var(--green-lt);border:1px solid var(--green-md);border-radius:10px;padding:5px 8px;text-align:center;min-width:62px">
-          <div style="font-size:9px;font-weight:600;text-transform:uppercase;color:var(--green);margin-bottom:1px">Ing.</div>
-          <div id="mini-ing" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--green)">-</div>
+    <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+      <button id="darkBtn" onclick="toggleDark()" style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;width:28px;height:28px;font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🌙</button>
+      <div style="display:flex;gap:3px">
+        <div style="background:var(--green-lt);border:1px solid var(--green-md);border-radius:8px;padding:3px 6px;text-align:center">
+          <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--green);letter-spacing:.3px">Ing</div>
+          <div id="mini-ing" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--green)">-</div>
         </div>
-        <div style="background:var(--red-lt);border:1px solid #f5c6c6;border-radius:10px;padding:5px 8px;text-align:center;min-width:62px">
-          <div style="font-size:9px;font-weight:600;text-transform:uppercase;color:var(--red);margin-bottom:1px">Egr.</div>
-          <div id="mini-egr" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--red)">-</div>
+        <div style="background:var(--red-lt);border:1px solid #f5c6c6;border-radius:8px;padding:3px 6px;text-align:center">
+          <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--red);letter-spacing:.3px">Egr</div>
+          <div id="mini-egr" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--red)">-</div>
         </div>
-        <div style="background:var(--gold-lt);border:1px solid #f0d9a0;border-radius:10px;padding:5px 8px;text-align:center;min-width:62px">
-          <div style="font-size:9px;font-weight:600;text-transform:uppercase;color:var(--amber);margin-bottom:1px">Disp.</div>
-          <div id="mini-disp" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--amber)">-</div>
+        <div style="background:var(--gold-lt);border:1px solid #f0d9a0;border-radius:8px;padding:3px 6px;text-align:center">
+          <div style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--amber);letter-spacing:.3px">Disp</div>
+          <div id="mini-disp" style="font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:var(--amber)">-</div>
         </div>
       </div>
     </div>
@@ -615,6 +627,7 @@ let D={
   ahorros:{},
   presupuesto:4611600,
   efectivo:[], // {id, desc, tipo:'entrada'|'salida', monto, persona, fecha, hora, nota}
+  presupuestoCat:{}, // {"2026-5": {"Comida":50000, ...}}
 };
 let mes=new Date().getMonth(),anio=new Date().getFullYear(),tabAct="resumen",filPer="Ambos",saving=false;
 
@@ -646,6 +659,7 @@ onValue(dbRef,snap=>{
     if(!D.ingresos)D.ingresos=[];
     if(!D.gastos)D.gastos=[];
     if(!D.efectivo)D.efectivo=[];
+    if(!D.presupuestoCat)D.presupuestoCat={};
 
     // ── PATCH: agregar tarjetas nuevas que no estén en Firebase ──
     const PATCH_TC=[
@@ -716,12 +730,19 @@ function calcMes(m,a){
   const ivan  =ingM.filter(i=>i.persona==="Ivan").reduce((s,i)=>s+i.monto,0);
   const noelia=ingM.filter(i=>i.persona==="Noelia").reduce((s,i)=>s+i.monto,0);
   const totIng=ivan+noelia;
+  // Confirmados vs pendientes
+  const totIngConf=ingM.filter(i=>i.confirmado).reduce((s,i)=>s+i.monto,0);
+  const totIngPend=totIng-totIngConf;
   const totGas=gasM.reduce((s,g)=>s+g.monto,0);
+  const totGasPag=gasM.filter(g=>g.pagado).reduce((s,g)=>s+g.monto,0);
+  const totGasPend=totGas-totGasPag;
   const totTC =tcM.reduce((s,t)=>s+(t.total||0),0);
   const totEgr=totGas+totTC;
   const sav=D.ahorros[key(m,a)]||{principal:0,secundario:0};
   const totSav=sav.principal+sav.secundario;
-  const disponible=totIng-totEgr-totSav;
+  // Disponible real (solo confirmados) vs estimado (todo)
+  const disponible    =totIng   -totEgr-totSav;
+  const disponibleReal=totIngConf-totGasPag-totTC-totSav;
   const bal=totIng-totEgr;
   const metaOk=totSav>=META_AHORRO;
 
@@ -730,7 +751,10 @@ function calcMes(m,a){
   tcM.forEach(t=>{catMap["Tarjeta de Crédito"]=(catMap["Tarjeta de Crédito"]||0)+(t.total||0);});
   const cats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
 
-  return{ingM,gasM,tcM,ivan,noelia,totIng,totGas,totTC,totEgr,bal,sav,totSav,disponible,metaOk,cats,pctPres:D.presupuesto>0?Math.min((totEgr/D.presupuesto)*100,100):0};
+  return{ingM,gasM,tcM,ivan,noelia,totIng,totIngConf,totIngPend,
+    totGas,totGasPag,totGasPend,totTC,totEgr,bal,sav,totSav,
+    disponible,disponibleReal,metaOk,cats,
+    pctPres:D.presupuesto>0?Math.min((totEgr/D.presupuesto)*100,100):0};
 }
 
 // ── RENDER RESUMEN ───────────────────────────────────────────────────
@@ -785,11 +809,23 @@ function rResumen(){
 
   document.getElementById("page-resumen").innerHTML=`
     <!-- DISPONIBLE HERO -->
-    <div style="background:${c.disponible>=0?"var(--green)":"var(--red)"};border-radius:16px;padding:20px;margin-bottom:14px;box-shadow:var(--sh2)">
-      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:6px">Disponible · ${MC[mes]} ${anio}</div>
-      <div style="font-size:36px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;font-family:'Inter',sans-serif">${fmt(c.disponible)}</div>
-      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:8px;display:flex;gap:12px;flex-wrap:wrap">
-        <span>↑ ${fmt(c.totIng)}</span><span>↓ ${fmt(c.totEgr)}</span><span>🏦 ${fmt(c.totSav)}</span>
+    <div style="background:${c.disponibleReal>=0?"var(--green)":"var(--red)"};border-radius:16px;padding:18px;margin-bottom:10px;box-shadow:var(--sh2)">
+      <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:4px">Disponible real · ${MC[mes]} ${anio}</div>
+      <div style="font-size:32px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;font-family:'Inter',sans-serif">${fmt(c.disponibleReal)}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.6);margin-top:6px">Confirmados ${fmt(c.totIngConf)} − Pagados ${fmt(c.totGasPag+c.totTC)}</div>
+    </div>
+    <div style="background:var(--light);border-radius:12px;padding:11px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px">Estimado (todo)</div>
+        <div style="font-size:15px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${c.disponible>=0?"var(--blue)":"var(--red)"}">${fmt(c.disponible)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px">Ing. pendientes</div>
+        <div style="font-size:14px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--muted)">${fmt(c.totIngPend)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px">Egr. pendientes</div>
+        <div style="font-size:14px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--amber)">${fmt(c.totGasPend)}</div>
       </div>
     </div>
 
@@ -1037,21 +1073,28 @@ function rIngresos(){
       <button class="btn g" onclick="addIng()">+ Agregar</button>
     </div>
     ${filtrados.map(i=>{
-      const medioColor=i.medio==="efectivo"?"var(--amber)":"var(--blue)";
-      const medioLabel=i.medio==="efectivo"?"💵":"🏦";
+      const conf=!!i.confirmado;
+      const esEfec=i.medio==="efectivo";
       const col=i.persona==="Ivan"?"var(--ivan)":"var(--noelia)";
+      // Verde si confirmado, gris si pendiente
+      const borderCol=conf?"var(--green)":"var(--border2)";
+      const montoColor=conf?"var(--green)":"var(--muted)";
+      const bgColor=conf?"var(--green-lt)":"var(--surface)";
       return `
-      <div class="item" style="border-left:3px solid ${col}">
+      <div class="item" style="border-left:3px solid ${borderCol};background:${bgColor}">
+        <button onclick="toggleConf(${i.id})"
+          style="width:26px;height:26px;min-width:26px;border-radius:50%;border:2px solid ${conf?"var(--green)":"var(--border2)"};background:${conf?"var(--green)":"transparent"};cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;transition:all .2s">${conf?"✓":""}</button>
         <div class="item-l">
-          <div class="item-desc">${i.desc}</div>
-          <div class="item-sub">
-            ${i.cat} · ${i.persona}
-            · <span style="font-size:9px;font-weight:600;color:${medioColor}">${medioLabel} ${i.medio==="efectivo"?"Efectivo":"Banco"}</span>
-            ${i.fecha?` · <span style="color:var(--muted);font-size:9px">${i.fecha} ${i.hora||""}</span>`:""}
+          <div class="item-desc" style="color:${conf?"var(--text)":"var(--muted)"};font-weight:${conf?"600":"400"}">${i.desc}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;display:flex;gap:4px;flex-wrap:wrap">
+            <span>${i.cat} · ${i.persona}</span>
+            <span style="font-weight:600;color:${conf?"var(--green)":"var(--muted)"}">${conf?"✓ Recibido":"Pendiente"}</span>
           </div>
         </div>
         <div class="item-r">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:${col}">${fmt(i.monto)}</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${montoColor}">${fmt(i.monto)}</span>
+          <button onclick="toggleMedio('ing',${i.id})"
+            style="min-width:26px;height:26px;border-radius:7px;border:1.5px solid ${esEfec?"var(--amber)":"var(--blue)"};background:${esEfec?"var(--amber-lt)":"var(--blue-lt)"};color:${esEfec?"var(--amber)":"var(--blue)"};font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">${esEfec?"💵":"🏦"}</button>
           <button onclick="abrirModal('ing',${i.id})" class="ebtn">✏️</button>
           <button class="idel" onclick="delIng(${i.id})">✕</button>
         </div>
@@ -1111,35 +1154,86 @@ function rEgresos(){
         <span class="csn" style="color:${color}"><span class="dot" style="background:${color}"></span>${cat}</span>
         <span class="cstot" style="color:${color}">${fmt(tot)}</span>
       </div>
-      ${items.map(g=>`
-        <div class="item" style="border-left:3px solid ${color};opacity:${g.pagado?".65":"1"}">
+      ${items.map(g=>{
+        const esEfec=(g.medio||'banco')==='efectivo';
+        // Verde = pendiente (dinero aún disponible), Gris = pagado (ya salió)
+        const bgColor=g.pagado?"var(--surface)":"var(--green-lt)";
+        const borderCol=g.pagado?"var(--border2)":color;
+        const montoColor=g.pagado?"var(--muted)":color;
+        return `
+        <div class="item" style="border-left:3px solid ${borderCol};background:${bgColor}">
+          <button onclick="togglePago(${g.id})"
+            style="width:26px;height:26px;min-width:26px;border-radius:50%;border:2px solid ${g.pagado?"var(--border2)":"var(--green)"};background:${g.pagado?"var(--border2)":"transparent"};cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:${g.pagado?"var(--surface)":"var(--green)"};transition:all .2s">${g.pagado?"✓":""}</button>
           <div class="item-l">
-            <div style="display:flex;align-items:center;gap:8px">
-              <button onclick="togglePago(${g.id})" title="${g.pagado?"Marcar pendiente":"Marcar pagado"}"
-                style="width:24px;height:24px;border-radius:50%;border:2px solid ${g.pagado?"var(--green)":color};background:${g.pagado?"var(--green)":"transparent"};cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:white;transition:all .2s">${g.pagado?"✓":""}</button>
-              <div>
-                <div class="item-desc" style="${g.pagado?"text-decoration:line-through;color:var(--muted)":""}">${g.desc}</div>
-                <div class="item-sub">
-                  ${g.cat}
-                  ${g.fecha?` · <span style="font-size:9px;color:var(--muted)">${g.fecha} ${g.hora||""}</span>`:""}
-                  · <span style="font-size:9px;font-weight:600;color:${g.pagado?"var(--green)":"var(--amber)"}">${g.pagado?"✓ PAG":"PEND"}</span>
-                  · <span style="font-size:9px;font-weight:600;color:${(g.medio||'banco')==='efectivo'?'var(--amber)':'var(--blue)'}">${(g.medio||'banco')==='efectivo'?'💵':'🏦'}</span>
-                </div>
-              </div>
+            <div class="item-desc" style="color:${g.pagado?"var(--muted)":"var(--text)"};text-decoration:${g.pagado?"line-through":"none"};font-weight:${g.pagado?"400":"500"}">${g.desc}</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px;display:flex;gap:4px;flex-wrap:wrap">
+              <span>${g.cat}</span>
+              <span style="font-weight:600;color:${g.pagado?"var(--muted)":"var(--green)"}">${g.pagado?"Pagado":"Pendiente"}</span>
+              ${g.fecha?`<span>${g.fecha}</span>`:""}
             </div>
           </div>
           <div class="item-r">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:${color}">${fmt(g.monto)}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${montoColor}">${fmt(g.monto)}</span>
+            <button onclick="toggleMedio('gas',${g.id})"
+              style="min-width:26px;height:26px;border-radius:7px;border:1.5px solid ${esEfec?"var(--amber)":"var(--blue)"};background:${esEfec?"var(--amber-lt)":"var(--blue-lt)"};color:${esEfec?"var(--amber)":"var(--blue)"};font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">${esEfec?"💵":"🏦"}</button>
             <button onclick="abrirModal('gas',${g.id})" class="ebtn">✏️</button>
             <button class="idel" onclick="delGas(${g.id})">✕</button>
           </div>
-        </div>`).join("")}
+        </div>`}).join("")}
     </div>`;
   });
+
+  // Presupuesto por categoría
+  const kMes=key(mes,anio);
+  const presCat=(D.presupuestoCat&&D.presupuestoCat[kMes])||{};
+  const allCats=[...new Set([...CAT_GAS,...Object.keys(presCat)])];
+  const catGastado={};
+  c.gasM.forEach(g=>{catGastado[g.cat]=(catGastado[g.cat]||0)+g.monto;});
+
+  html+=`<div class="card" style="margin-top:4px">
+    <div class="card-title">📋 Presupuesto por categoría</div>
+    <p style="font-size:10px;color:var(--muted);margin-bottom:12px">Tocá el monto para editar el presupuesto de cada categoría</p>
+    ${CAT_GAS.map(cat=>{
+      const gast=catGastado[cat]||0;
+      const pres=presCat[cat]||0;
+      const pct=pres>0?Math.min((gast/pres)*100,100):0;
+      const color=pct>90?"var(--red)":pct>70?"var(--amber)":"var(--green)";
+      if(gast===0&&pres===0) return "";
+      return `<div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+          <span style="font-size:12px;font-weight:500">${cat}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace">${fmt(gast)}</span>
+            <span style="font-size:10px;color:var(--muted)">/</span>
+            <input type="number" value="${pres||""}" placeholder="Presupuesto"
+              style="width:90px;border:1px solid var(--border);border-radius:7px;padding:4px 7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);background:var(--bg);outline:none;text-align:right"
+              onchange="setPresCat('${kMes}','${cat}',this.value)">
+          </div>
+        </div>
+        ${pres>0?`<div class="prog-track" style="height:6px">
+          <div class="prog-bar" style="width:${pct}%;background:${color}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px">
+          <span>${Math.round(pct)}% usado</span>
+          <span>${pres>gast?`Queda ${fmt(pres-gast)}`:`Excedido ${fmt(gast-pres)}`}</span>
+        </div>`:""}
+      </div>`;
+    }).join("")}
+    <p style="font-size:10px;color:var(--muted);margin-top:4px">Las categorías sin gastos registrados este mes no se muestran. Escribí un monto para activar el presupuesto.</p>
+  </div>`;
 
   document.getElementById("page-egresos").innerHTML=html;
   if(!window._medioGas) window._medioGas="banco";
   setMedioGas(window._medioGas);
+}
+
+window.setPresCat=function(k,cat,val){
+  if(!D.presupuestoCat)D.presupuestoCat={};
+  if(!D.presupuestoCat[k])D.presupuestoCat[k]={};
+  const n=parseFloat(val);
+  if(!isNaN(n)&&n>0) D.presupuestoCat[k][cat]=n;
+  else delete D.presupuestoCat[k][cat];
+  save();
 }
 
 // ── RENDER AHORRO ────────────────────────────────────────────────────
@@ -1422,7 +1516,8 @@ window.savTC=function(){
 }
 
 window.delTC=function(id){
-  D.tarjetas=D.tarjetas.filter(t=>t.id!==id);
+  const sid=String(id);
+  D.tarjetas=D.tarjetas.filter(t=>String(t.id)!==sid);
   save();renderAll();
 }
 
@@ -1645,8 +1740,25 @@ window.cancEdit=function(tipo,id,orig){
   if(w)w.outerHTML=decodeURIComponent(orig);
 }
 
-window.delIng=function(id){D.ingresos=D.ingresos.filter(i=>i.id!==id);save();renderAll();}
-window.delGas=function(id){D.gastos=D.gastos.filter(g=>g.id!==id);save();renderAll();}
+window.delIng=function(id){
+  const sid=String(id);
+  D.ingresos=D.ingresos.filter(i=>String(i.id)!==sid);
+  // limpiar efectivo auto vinculado
+  D.efectivo=(D.efectivo||[]).filter(m=>String(m.ingId||"")!==sid);
+  save();renderAll();
+}
+window.delGas=function(id){
+  const sid=String(id);
+  D.gastos=D.gastos.filter(g=>String(g.id)!==sid);
+  // limpiar efectivo auto vinculado
+  D.efectivo=(D.efectivo||[]).filter(m=>String(m.gasId||"")!==sid);
+  save();renderAll();
+}
+window.delEfectivo=function(id){
+  const sid=String(id);
+  D.efectivo=(D.efectivo||[]).filter(m=>String(m.id)!==sid);
+  save();rEfectivo();
+}
 
 window.editDesc=function(tipo,id){
   const obj=tipo==="ing"?D.ingresos.find(i=>i.id===id):D.gastos.find(g=>g.id===id);
@@ -1724,16 +1836,7 @@ window.addGas=function(){
   const medio=window._medioGas||"banco";
   D.gastos.push({id:Date.now(),desc,cat,monto,mes,anio,medio,
     fecha:ts.toLocaleDateString("es-AR"),hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})});
-  // Si es efectivo → registrar salida automática en billetera
-  if(medio==="efectivo"){
-    if(!D.efectivo)D.efectivo=[];
-    D.efectivo.push({
-      id:"ef-gas-"+Date.now(),desc:`↓ ${desc}`,
-      tipo:"salida",monto,persona:"",auto:true,
-      fecha:ts.toLocaleDateString("es-AR"),
-      hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
-    });
-  }
+  // Efectivo se descuenta SOLO cuando se marca como pagado (en togglePago)
   save();renderAll();
 }
 
@@ -2291,16 +2394,92 @@ document.getElementById("editModal").addEventListener("click",e=>{
   if(e.target===document.getElementById("editModal")) cerrarModal();
 });
 
+// ── TOGGLE MEDIO (banco ↔ efectivo) ──────────────────────────────────
+window.toggleMedio=function(tipo,id){
+  const obj=tipo==="ing"?D.ingresos.find(i=>i.id===id):D.gastos.find(g=>g.id===id);
+  if(!obj)return;
+  const nuevoMedio=obj.medio==="efectivo"?"banco":"efectivo";
+  obj.medio=nuevoMedio;
+
+  // Si era ingreso confirmado efectivo → actualizar billetera
+  if(tipo==="ing"&&obj.confirmado){
+    D.efectivo=(D.efectivo||[]).filter(m=>m.ingId!==id);
+    if(nuevoMedio==="efectivo"){
+      const ts=new Date();
+      D.efectivo.push({
+        id:"ef-ing-"+id,desc:`↑ ${obj.desc} (${obj.persona})`,
+        tipo:"entrada",monto:obj.monto,persona:obj.persona,auto:true,ingId:id,
+        fecha:obj.fecha||ts.toLocaleDateString("es-AR"),
+        hora:obj.hora||ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+      });
+    }
+  }
+
+  // Si era egreso pagado efectivo → actualizar billetera
+  if(tipo==="gas"&&obj.pagado){
+    D.efectivo=(D.efectivo||[]).filter(m=>m.gasId!==id);
+    if(nuevoMedio==="efectivo"){
+      const ts=new Date();
+      D.efectivo.push({
+        id:"ef-gas-"+id,desc:`↓ ${obj.desc}`,
+        tipo:"salida",monto:obj.monto,persona:"",auto:true,gasId:id,
+        fecha:obj.fecha||ts.toLocaleDateString("es-AR"),
+        hora:obj.hora||ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+      });
+    }
+  }
+
+  save();renderAll();
+}
+
+// ── TOGGLE CONFIRMACIÓN INGRESO ───────────────────────────────────────
+window.toggleConf=function(id){
+  const i=D.ingresos.find(x=>x.id===id);
+  if(!i)return;
+  i.confirmado=!i.confirmado;
+  if((i.medio||"banco")==="efectivo"){
+    if(i.confirmado){
+      if(!D.efectivo)D.efectivo=[];
+      if(!D.efectivo.find(m=>m.ingId===id)){
+        const ts=new Date();
+        D.efectivo.push({
+          id:"ef-ing-"+id,desc:`↑ ${i.desc} (${i.persona})`,
+          tipo:"entrada",monto:i.monto,persona:i.persona,auto:true,ingId:id,
+          fecha:i.fecha||ts.toLocaleDateString("es-AR"),
+          hora:i.hora||ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+        });
+      }
+    } else {
+      D.efectivo=(D.efectivo||[]).filter(m=>m.ingId!==id);
+    }
+  }
+  save();renderAll();
+}
+
 // ── TOGGLE PAGO ──────────────────────────────────────────────────────
 window.togglePago=function(id){
   const g=D.gastos.find(x=>x.id===id);
   if(!g)return;
   g.pagado=!g.pagado;
+  const ts=new Date();
   if(g.pagado){
-    const ts=new Date();
     g.fechaPago=ts.toLocaleDateString("es-AR")+" "+ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});
+    // Efectivo: descontar al marcar pagado
+    if((g.medio||"banco")==="efectivo"){
+      if(!D.efectivo)D.efectivo=[];
+      if(!D.efectivo.find(m=>m.gasId===id)){
+        D.efectivo.push({
+          id:"ef-gas-"+id,desc:`↓ ${g.desc}`,
+          tipo:"salida",monto:g.monto,persona:"",auto:true,gasId:id,
+          fecha:ts.toLocaleDateString("es-AR"),
+          hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
+        });
+      }
+    }
   } else {
     delete g.fechaPago;
+    // Desmarcar: quitar salida automática
+    D.efectivo=(D.efectivo||[]).filter(m=>m.gasId!==id);
   }
   save();rEgresos();updateMini();
 }
@@ -2309,18 +2488,24 @@ window.togglePago=function(id){
 function rEfectivo(){
   const movs=D.efectivo||[];
 
-  // Calcular saldo efectivo: manuales + auto de ingresos/gastos
+  // ── Saldo efectivo acumulado (billetera, todos los tiempos) ──
   const entradas=movs.filter(m=>m.tipo==="entrada").reduce((s,m)=>s+m.monto,0);
   const salidas =movs.filter(m=>m.tipo==="salida").reduce((s,m)=>s+m.monto,0);
   const saldoEfectivo=entradas-salidas;
 
-  // Calcular saldo banco: ingresos banco - gastos banco - TC pagados
-  const ingBanco=D.ingresos.filter(i=>(i.medio||"banco")==="banco").reduce((s,i)=>s+i.monto,0);
-  const gasBanco=D.gastos.filter(g=>(g.medio||"banco")==="banco").reduce((s,g)=>s+g.monto,0);
-  const tcTotal =D.tarjetas.reduce((s,t)=>s+(t.total||0),0);
-  const saldoBanco=ingBanco-gasBanco-tcTotal;
+  // ── Análisis banco del MES SELECCIONADO ──
+  const ingMes   =D.ingresos.filter(i=>i.mes===mes&&i.anio===anio);
+  const gasMes   =D.gastos.filter(g=>g.mes===mes&&g.anio===anio);
+  const tcMes    =D.tarjetas.filter(t=>t.mes===mes&&t.anio===anio);
 
-  // Últimos 40 movimientos ordenados más reciente primero
+  const ingBancoMes  =ingMes.filter(i=>(i.medio||"banco")==="banco").reduce((s,i)=>s+i.monto,0);
+  const ingEfecMes   =ingMes.filter(i=>i.medio==="efectivo").reduce((s,i)=>s+i.monto,0);
+  const gasBancoMes  =gasMes.filter(g=>(g.medio||"banco")==="banco").reduce((s,g)=>s+g.monto,0);
+  const gasEfecMes   =gasMes.filter(g=>g.medio==="efectivo").reduce((s,g)=>s+g.monto,0);
+  const tcTotalMes   =tcMes.reduce((s,t)=>s+(t.total||0),0);
+  const saldoBancoMes=ingBancoMes-gasBancoMes-tcTotalMes;
+
+  // Últimos 40 movimientos más reciente primero
   const recent=[...movs].reverse().slice(0,40);
 
   const movRows=recent.map(m=>`
@@ -2345,35 +2530,35 @@ function rEfectivo(){
     </div>`).join("");
 
   document.getElementById("page-efectivo").innerHTML=`
-    <!-- SALDOS HERO -->
+    <!-- SALDOS -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <!-- EFECTIVO -->
       <div style="background:${saldoEfectivo>=0?"var(--amber)":"var(--red)"};border-radius:16px;padding:16px;box-shadow:var(--sh2)">
-        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:4px">💵 Efectivo</div>
-        <div style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1">${fmt(saldoEfectivo)}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.65);margin-top:5px">+${fmt(entradas)} −${fmt(salidas)}</div>
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:4px">💵 Efectivo total</div>
+        <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1">${fmt(saldoEfectivo)}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6);margin-top:5px">Billetera acumulada</div>
       </div>
-      <!-- BANCO -->
-      <div style="background:${saldoBanco>=0?"var(--blue)":"var(--red)"};border-radius:16px;padding:16px;box-shadow:var(--sh2)">
-        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:4px">🏦 Banco est.</div>
-        <div style="font-size:24px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1">${fmt(saldoBanco)}</div>
-        <div style="font-size:9px;color:rgba(255,255,255,.65);margin-top:5px">Ing−Gas−TC</div>
+      <div style="background:${saldoBancoMes>=0?"var(--blue)":"var(--red)"};border-radius:16px;padding:16px;box-shadow:var(--sh2)">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.65);margin-bottom:4px">🏦 Banco ${MC[mes]}</div>
+        <div style="font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px;line-height:1">${fmt(saldoBancoMes)}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.6);margin-top:5px">Solo este mes</div>
       </div>
     </div>
 
-    <!-- DETALLE BANCO -->
+    <!-- DESGLOSE DEL MES -->
     <div class="card" style="margin-bottom:12px">
-      <div class="card-title">🏦 Desglose bancario</div>
-      <div class="dr"><span class="lbl">Ingresos bancarios</span><span class="val" style="color:var(--green)">${fmt(ingBanco)}</span></div>
-      <div class="dr"><span class="lbl">Gastos bancarios</span><span class="val" style="color:var(--red)">− ${fmt(gasBanco)}</span></div>
-      <div class="dr"><span class="lbl">Tarjetas de crédito</span><span class="val" style="color:var(--red)">− ${fmt(tcTotal)}</span></div>
+      <div class="card-title">Desglose ${MC[mes]} ${anio}</div>
+      <div class="dr"><span class="lbl">🏦 Ingresos banco</span><span class="val" style="color:var(--green)">${fmt(ingBancoMes)}</span></div>
+      <div class="dr"><span class="lbl">💵 Ingresos efectivo</span><span class="val" style="color:var(--amber)">${fmt(ingEfecMes)}</span></div>
+      <div class="dr"><span class="lbl">🏦 Gastos banco</span><span class="val" style="color:var(--red)">− ${fmt(gasBancoMes)}</span></div>
+      <div class="dr"><span class="lbl">💵 Gastos efectivo</span><span class="val" style="color:var(--red)">− ${fmt(gasEfecMes)}</span></div>
+      <div class="dr"><span class="lbl">💳 Tarjetas</span><span class="val" style="color:var(--red)">− ${fmt(tcTotalMes)}</span></div>
       <hr class="div">
-      <div class="dr bold"><span class="lbl">Saldo estimado banco</span><span class="val" style="color:${saldoBanco>=0?"var(--blue)":"var(--red)"}">${fmt(saldoBanco)}</span></div>
+      <div class="dr bold"><span class="lbl">Resultado banco</span><span class="val" style="color:${saldoBancoMes>=0?"var(--blue)":"var(--red)"}">${fmt(saldoBancoMes)}</span></div>
     </div>
 
     <!-- FORMULARIO -->
     <div class="card">
-      <div class="card-title">+ Registrar movimiento de efectivo</div>
+      <div class="card-title">+ Movimiento de efectivo manual</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <button id="btn-entrada" onclick="setTipoEfectivo('entrada')"
           style="padding:10px;border-radius:10px;border:2px solid var(--green);background:var(--green-lt);color:var(--green);font-weight:600;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif">
@@ -2384,7 +2569,7 @@ function rEfectivo(){
           ↓ Salida
         </button>
       </div>
-      <div class="fg"><input class="finp" id="ef-desc" placeholder="Descripción (ej: Retiro ATM, Pago taxi...)"></div>
+      <div class="fg"><input class="finp" id="ef-desc" placeholder="Descripción (ej: Retiro ATM...)"></div>
       <div class="fg frow" style="margin-top:8px">
         <input class="finp" id="ef-monto" type="number" placeholder="Monto $">
         <select class="fsel" id="ef-persona"><option>Ivan</option><option>Noelia</option></select>
@@ -2394,9 +2579,9 @@ function rEfectivo(){
     </div>
 
     <!-- MOVIMIENTOS -->
-    <div style="font-size:13px;font-weight:600;color:var(--text);margin:4px 0 10px">
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin:4px 0 10px">
       Movimientos · ${movs.length} registros
-      <span style="font-size:10px;color:var(--muted);font-weight:400"> · "auto" = generado desde ingresos/egresos</span>
+      <span style="font-size:9px;color:var(--muted);font-weight:400"> · "auto" = generado automáticamente</span>
     </div>
     ${movRows||`<div style="text-align:center;color:var(--muted);font-size:12px;padding:24px">Sin movimientos aún</div>`}
     <div style="margin-bottom:24px"></div>
@@ -2406,30 +2591,6 @@ function rEfectivo(){
   setTipoEfectivo(window._tipoEfectivo);
 }
 
-window.addEfectivo=function(){
-  const desc   =document.getElementById("ef-desc").value.trim();
-  const monto  =parseFloat(document.getElementById("ef-monto").value);
-  const persona=document.getElementById("ef-persona").value;
-  const nota   =document.getElementById("ef-nota").value.trim();
-  if(!desc||isNaN(monto)||monto<=0)return;
-  const ts=new Date();
-  if(!D.efectivo)D.efectivo=[];
-  D.efectivo.push({
-    id:"ef"+Date.now(),
-    desc,tipo:window._tipoEfectivo,monto,persona,nota,
-    fecha:ts.toLocaleDateString("es-AR"),
-    hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})
-  });
-  document.getElementById("ef-desc").value="";
-  document.getElementById("ef-monto").value="";
-  document.getElementById("ef-nota").value="";
-  save();rEfectivo();
-}
-
-window.delEfectivo=function(id){
-  D.efectivo=D.efectivo.filter(m=>m.id!==id);
-  save();rEfectivo();
-}
 
 function renderAll(){
   rResumen();
