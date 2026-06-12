@@ -538,24 +538,48 @@ function rResumen(){
   document.getElementById("page-resumen").innerHTML=`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
       <div class="hero" style="background:${s.dispBanco>=0?"linear-gradient(135deg,#4F46E5,#7C3AED)":"linear-gradient(135deg,#EF4444,#DC2626)"}">
-        <div class="hero-lbl">🏦 Banco disp.</div>
+        <div class="hero-lbl">🏦 Banco real</div>
         <div class="hero-amt">${fmt(s.dispBanco)}</div>
-        <div class="hero-sub">✓ ${fmt(s.ingBancoConf)} − Egr. ${fmt(s.gasBancoPag+s.totTC)} − Ahorro ${fmt(s.ahorrosBancoMes)}</div>
+        <div class="hero-sub">Solo gastos con ✓ confirmado</div>
       </div>
       <div class="hero" style="background:${s.dispEfec>=0?"linear-gradient(135deg,#F59E0B,#D97706)":"linear-gradient(135deg,#EF4444,#DC2626)"}">
-        <div class="hero-lbl">💵 Efectivo disp.</div>
+        <div class="hero-lbl">💵 Efectivo real</div>
         <div class="hero-amt">${fmt(s.dispEfec)}</div>
-        <div class="hero-sub">Billetera ${fmt(s.efecBruto)} − Ahorro ${fmt(s.ahorrosEfecMes)}</div>
+        <div class="hero-sub">Solo gastos con ✓ confirmado</div>
       </div>
     </div>
     <div class="g3">
       <div class="stat"><div class="stat-lbl">💰 Ingresos</div><div class="stat-val" style="color:var(--green)">${fmt(s.totIng)}</div></div>
-      <div class="stat"><div class="stat-lbl">💸 Egresos</div><div class="stat-val" style="color:var(--red)">${fmt(s.totGas+s.totTC)}</div></div>
+      <div class="stat"><div class="stat-lbl">✅ Egr. pagados</div><div class="stat-val" style="color:var(--red)">${fmt(s.totGasPag+s.totTC)}</div></div>
       <div class="stat"><div class="stat-lbl">🏦 Ahorro</div><div class="stat-val" style="color:var(--indigo)">${fmt(s.totSavMes)}</div></div>
     </div>
-    <div class="g2">
-      <div class="stat" style="border-left:3px solid var(--green)"><div class="stat-lbl">✓ Confirmados</div><div class="stat-val" style="color:var(--green);font-size:12px">${fmt(s.totIngConf)}</div></div>
-      <div class="stat" style="border-left:3px solid var(--muted)"><div class="stat-lbl">⏳ Pendientes</div><div class="stat-val" style="color:var(--muted);font-size:12px">${fmt(s.totIng-s.totIngConf)}</div></div>
+
+    <!-- ESTADO DE PAGOS -->
+    <div class="card" style="background:var(--light);border:none">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Estado de pagos · ${MESES[mes]}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <span style="font-size:12px;color:var(--muted)">Egresos cargados (total)</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text)">${fmt(s.totGas+s.totTC)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block"></span>Confirmados ✓ (ya salió)</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red)">− ${fmt(s.totGasPag+s.totTC)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Sin confirmar (aún disponible)</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">${fmt(s.totGas-s.totGasPag)}</span>
+      </div>
+      <div style="background:var(--border);height:1px;margin-bottom:10px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">✓ Ing. confirmados</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">${fmt(s.totIngConf)}</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">⏳ Ing. pendientes</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--muted)">${fmt(s.totIng-s.totIngConf)}</div>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title">Ingresos vs Egresos · últimos 6 meses</div>
