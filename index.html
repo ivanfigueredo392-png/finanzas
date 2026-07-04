@@ -322,7 +322,7 @@ const CAT_GAS=["Cochera","Combustible","Compras","Deporte","Educación","Farmaci
 const CAT_GAS_DEFAULT="Supermercado";
 
 // ── ESTADO ──────────────────────────────────────────────────────────
-let D={ingresos:[],gastos:[],tarjetas:[],ahorros:{},efectivo:[],presupuestoCat:{}};
+let D={ingresos:[],gastos:[],tarjetas:[],ahorros:{},efectivo:[],presupuestoCat:{},recurrentes:[],cuotas:[]};
 let mes=new Date().getMonth(), anio=new Date().getFullYear(), tabAct="resumen", saving=false;
 const key=(m,a)=>`${a}-${m}`;
 const fmt=n=>new Intl.NumberFormat("es-AR",{style:"currency",currency:"ARS",minimumFractionDigits:0,maximumFractionDigits:0}).format(n||0);
@@ -354,11 +354,64 @@ onValue(dbRef,snap=>{
     if(!D.gastos)D.gastos=[];
     if(!D.efectivo)D.efectivo=[];
     if(!D.presupuestoCat)D.presupuestoCat={};
+    if(!D.cuotas)D.cuotas=[];
     // PATCH: TC Junio
     if(!D.tarjetas.find(t=>t.id==="tc-jun-ivan")){
       D.tarjetas.push({id:"tc-jun-ivan",desc:"TC Ivan · Visa Macro",persona:"Ivan",total:1216916,mes:5,anio:2026,items:[{fecha:"12/05/26",desc:"Toyota Plan",cat:"Auto/Transporte",monto:314846.85},{fecha:"17/05/26",desc:"G P V Sociedad Anónima",cat:"Entretenimiento",monto:174469.50},{fecha:"07/03/26",desc:"Zara",cat:"Ropa",monto:89993.33},{fecha:"05/05/26",desc:"Avalian",cat:"Salud",monto:139357.38},{fecha:"24/04/26",desc:"La Segunda",cat:"Seguros",monto:101328.95},{fecha:"18/05/26",desc:"Renaper MS",cat:"Salidas/Rest.",monto:100000.00},{fecha:"05/05/26",desc:"Colegio Verbo EN",cat:"Educación",monto:77221.00}],detalle:[{cat:"Auto/Transporte",monto:314846.85},{cat:"Entretenimiento",monto:174469.50},{cat:"Ropa",monto:148776.66},{cat:"Salud",monto:139357.38},{cat:"Seguros",monto:103778.95},{cat:"Salidas/Rest.",monto:100000.00},{cat:"Educación",monto:77221.00},{cat:"Suscripciones",monto:67612.55},{cat:"Impuestos",monto:42688.00},{cat:"Servicios",monto:39935.34},{cat:"Compras Online",monto:18399.00}]});
       save();
     }
+    // PATCH: TC Julio 2026 (cierre 25 Jun, vence 06 Jul)
+    if(!D.tarjetas.find(t=>t.id==="tc-jul-ivan")){
+      D.tarjetas.push({
+        id:"tc-jul-ivan",
+        desc:"TC Ivan · Visa Macro",
+        persona:"Ivan",
+        total:982542,
+        mes:6,
+        anio:2026,
+        items:[
+          {fecha:"22/05/26",desc:"La Segunda (seguro)",cat:"Seguros",monto:101316.00},
+          {fecha:"26/05/26",desc:"MercadoPago (compra)",cat:"Compras",monto:104499.05},
+          {fecha:"01/06/26",desc:"Avalian (obra social)",cat:"Salud",monto:200484.61},
+          {fecha:"05/06/26",desc:"Colegio Verbo EN",cat:"Educación",monto:77221.00},
+          {fecha:"10/06/26",desc:"Toyota Plan ARG",cat:"Auto/Transporte",monto:314307.20},
+          {fecha:"10/06/26",desc:"Claro (deb. aut.)",cat:"Servicios",monto:41932.10},
+          {fecha:"29/05/26",desc:"Netflix",cat:"Suscripciones",monto:20398.00},
+          {fecha:"12/06/26",desc:"Adobe",cat:"Suscripciones",monto:21695.30},
+          {fecha:"25/05/26",desc:"Adobe",cat:"Suscripciones",monto:2926.99},
+          {fecha:"04/06/26",desc:"Spotify",cat:"Suscripciones",monto:4399.00},
+          {fecha:"25/05/26",desc:"Google YouTube",cat:"Suscripciones",monto:3399.00},
+          {fecha:"23/06/26",desc:"Opción Seguros",cat:"Seguros",monto:2450.00},
+          {fecha:"13/06/26",desc:"MercadoPago/Meli",cat:"Compras",monto:20990.00},
+          {fecha:"23/05/26",desc:"Google Claude x2 + One + Apple (USD)",cat:"Suscripciones",monto:18500.00},
+          {fecha:"25/05/26",desc:"Impuestos · sellos · IVA · IIBB · intereses",cat:"Impuestos",monto:48024.00},
+        ],
+        detalle:[
+          {cat:"Auto/Transporte",monto:314307.20},
+          {cat:"Salud",monto:200484.61},
+          {cat:"Seguros",monto:103766.00},
+          {cat:"Educación",monto:77221.00},
+          {cat:"Compras",monto:125489.05},
+          {cat:"Servicios",monto:41932.10},
+          {cat:"Suscripciones",monto:70918.29},
+          {cat:"Impuestos",monto:48024.00},
+        ]
+      });
+      save();
+    }
+    // AUTO-GENERAR RECURRENTES del mes real en curso
+    if(!D.recurrentes)D.recurrentes=[];
+    const rm=new Date().getMonth(), ra=new Date().getFullYear();
+    let recCreated=false;
+    D.recurrentes.forEach(r=>{
+      if(!D.gastos.find(g=>g.recId===r.id&&g.mes===rm&&g.anio===ra)){
+        D.gastos.push({id:Date.now()+Math.floor(Math.random()*1000),desc:r.desc,cat:r.cat,monto:r.monto,
+          mes:rm,anio:ra,medio:r.medio||"banco",recId:r.id,venc:r.venc||null,
+          fecha:new Date().toLocaleDateString("es-AR")});
+        recCreated=true;
+      }
+    });
+    if(recCreated)save();
     document.getElementById("syncDot").innerHTML='<span style="color:var(--green)">● en línea</span>';
     syncBar("ok","✓ Datos cargados");
   } else {
@@ -401,11 +454,17 @@ function calcSaldos(){
     +((savMes.medioS||"efectivo")==="efectivo"?(savMes.secundario||0):0);
 
   // Ahorros acumulados históricos (para mostrar en Ahorro, no para disponible del mes)
-  let ahorroBanco=0,ahorroEfec=0;
+  let ahorroBanco=0,ahorroEfec=0,invertidoAcum=0,dolarizadoAcum=0,dolarizadoUsd=0;
   Object.values(D.ahorros||{}).forEach(s=>{
     if((s.medioP||"banco")==="banco") ahorroBanco+=(s.principal||0); else ahorroEfec+=(s.principal||0);
     if((s.medioS||"efectivo")==="efectivo") ahorroEfec+=(s.secundario||0); else ahorroBanco+=(s.secundario||0);
+    (s.destinos||[]).forEach(d=>{
+      if(d.tipo==="invertido") invertidoAcum+=(d.monto||0);
+      if(d.tipo==="dolarizado"){dolarizadoAcum+=(d.monto||0);dolarizadoUsd+=(d.usd||0);}
+    });
   });
+  const ahorroAcumTotal=ahorroBanco+ahorroEfec;
+  const ahorroLiquido=Math.max(0,ahorroAcumTotal-invertidoAcum-dolarizadoAcum);
 
   // Billetera efectivo (acumulada)
   const movsEfec=D.efectivo||[];
@@ -426,6 +485,7 @@ function calcSaldos(){
     totIng,totIngConf,ingBanco,ingEfec,ingBancoConf,ingEfecConf,
     totGas,gasBancoPag,gasEfecPag,totGasPag,totTC,
     savMes,totSavMes,ahorroBanco,ahorroEfec,ahorrosBancoMes,ahorrosEfecMes,
+    invertidoAcum,dolarizadoAcum,dolarizadoUsd,ahorroAcumTotal,ahorroLiquido,
     efecBruto,efecEnt,efecSal,dispBanco,dispEfec,
     cats,pctMeta:META>0?Math.min((totSavMes/META)*100,100):0};
 }
@@ -443,12 +503,20 @@ function eItem(g,showMedio=true){
   const esEfec=(g.medio||"banco")==="efectivo";
   const bg=g.pagado?"":"var(--green-lt)";
   const bc=g.pagado?"var(--border)":"var(--green)";
-  const mc=g.pagado?"var(--muted)":"var(--text)";
+  // Badge de vencimiento
+  let vencBadge="";
+  if(!g.pagado&&g.venc){
+    const hoy0=new Date();hoy0.setHours(0,0,0,0);
+    const dias=Math.round((new Date(g.venc+"T00:00:00")-hoy0)/86400000);
+    const vcol=dias<0?"var(--red)":dias<=3?"var(--amber)":"var(--muted)";
+    const vlbl=dias<0?`⚠️ Vencido`:dias===0?`⏰ Vence HOY`:`⏰ ${dias}d`;
+    vencBadge=` · <span style="font-weight:700;color:${vcol}">${vlbl}</span>`;
+  }
   return `<div class="item${g.pagado?" gray":""}" style="border-left:3px solid ${bc};background:${bg}">
     <button class="check-btn" onclick="togglePago(${g.id})" style="border-color:${g.pagado?"var(--border2)":"var(--green)"};background:${g.pagado?"var(--border2)":"transparent"};color:${g.pagado?"#fff":"var(--green)"}">${g.pagado?"✓":""}</button>
     <div class="item-l">
-      <div class="item-desc" style="color:${g.pagado?"var(--muted)":"var(--text)"};text-decoration:${g.pagado?"line-through":"none"}">${g.desc}</div>
-      <div class="item-sub">${g.cat} · <span style="font-weight:600;color:${g.pagado?"var(--muted)":"var(--green)"}">${g.pagado?"Pagado":"Pendiente"}</span>${g.fecha?` · ${g.fecha}`:""}${showMedio?` · <span style="color:${esEfec?"var(--amber)":"var(--blue)"}">${esEfec?"💵":"🏦"}</span>`:""}</div>
+      <div class="item-desc" style="color:${g.pagado?"var(--muted)":"var(--text)"};text-decoration:${g.pagado?"line-through":"none"}">${g.recId?"🔁 ":""}${g.desc}</div>
+      <div class="item-sub">${g.cat} · <span style="font-weight:600;color:${g.pagado?"var(--muted)":"var(--green)"}">${g.pagado?"Pagado":"Pendiente"}</span>${vencBadge}${g.fecha?` · ${g.fecha}`:""}${showMedio?` · <span style="color:${esEfec?"var(--amber)":"var(--blue)"}">${esEfec?"💵":"🏦"}</span>`:""}</div>
     </div>
     <div class="item-r">
       <span class="amt" style="color:${g.pagado?"var(--muted)":COLORS[CAT_GAS.indexOf(g.cat)%COLORS.length]||"var(--red)"}">${fmt(g.monto)}</span>
@@ -476,160 +544,247 @@ function eGroup(items, showMedio=true){
   }).join("");
 }
 
+// ── AGRUPACIÓN DE CATEGORÍAS ─────────────────────────────────────────
+const GRUPOS={
+  impuestos:["Impuestos"],
+  fijos:["Cochera","Salud","Farmacia","Educación","Deporte"],
+  variables:["Supermercado","Combustible","Transporte","Compras","Regalos","Salidas","Otros"]
+};
+
 // ── RESUMEN ──────────────────────────────────────────────────────────
 function rResumen(){
   const s=calcSaldos();
-  const last6=[];
-  for(let i=5;i>=0;i--){let hm=mes-i,ha=anio;while(hm<0){hm+=12;ha--;}const hc=calcSaldos_for(hm,ha);last6.push({m:hm,a:ha,c:hc});}
-  const maxV=Math.max(...last6.map(h=>Math.max(h.c.totIng,h.c.totGas+h.c.totTC)),1);
-  const prevMes=mes>0?calcSaldos_for(mes-1,anio):calcSaldos_for(11,anio-1);
-  const varIng=prevMes.totIng>0?Math.round(((s.totIng-prevMes.totIng)/prevMes.totIng)*100):0;
 
-  let bars="",xlabels="";
-  const W=320,H=90,bw=22,gap=10;
-  last6.forEach((h,i)=>{
-    const x=i*(bw*2+gap+4);
-    const ih=Math.max(3,Math.round((h.c.totIng/maxV)*(H-10)));
-    const eh=Math.max(3,Math.round(((h.c.totGas+h.c.totTC)/maxV)*(H-10)));
-    bars+=`<rect x="${x}" y="${H-ih}" width="${bw}" height="${ih}" rx="3" fill="#10B981" opacity=".85"/>`;
-    bars+=`<rect x="${x+bw+2}" y="${H-eh}" width="${bw}" height="${eh}" rx="3" fill="#EF4444" opacity=".8"/>`;
-    xlabels+=`<text x="${x+bw}" y="${H+12}" text-anchor="middle" font-size="8" fill="var(--muted)" font-family="Inter">${MC[h.m]}</text>`;
+  // Totales por grupo (todos los gastos del mes, banco + efectivo)
+  const gasM=s.gasM;
+  const totGrp=grp=>gasM.filter(g=>GRUPOS[grp].includes(g.cat)).reduce((x,g)=>x+g.monto,0);
+  const totImpuestos =totGrp("impuestos");
+  const totFijos     =totGrp("fijos");
+  const totVariables =totGrp("variables");
+
+  // Totales pagados por grupo
+  const totPagGrp=grp=>gasM.filter(g=>GRUPOS[grp].includes(g.cat)&&g.pagado).reduce((x,g)=>x+g.monto,0);
+  const pagImpuestos =totPagGrp("impuestos");
+  const pagFijos     =totPagGrp("fijos");
+  const pagVariables =totPagGrp("variables");
+
+  // % egresos pagados sobre ingresos
+  const pctEgr=s.totIng>0?Math.min(Math.round((s.totGasPag+s.totTC)/s.totIng*100),100):0;
+  const pctEgrW=Math.round(pctEgr*1.5); // barra px (max 150px)
+
+  // Barra histórico últimos 6 meses
+  const hist=[];
+  for(let i=5;i>=0;i--){
+    let hm=mes-i,ha=anio;
+    while(hm<0){hm+=12;ha--;}
+    hist.push({m:hm,a:ha,c:calcSaldos_for(hm,ha)});
+  }
+  const maxV=Math.max(...hist.map(h=>Math.max(h.c.totIng,h.c.totGas+h.c.totTC)),1);
+  const bw=24,gap=8,H=80;
+  let bars="",xlbls="";
+  hist.forEach((h,i)=>{
+    const x=4+i*(bw*2+gap);
+    const ih=Math.max(3,Math.round(h.c.totIng/maxV*(H-8)));
+    const eh=Math.max(3,Math.round((h.c.totGas+h.c.totTC)/maxV*(H-8)));
+    bars+=`<rect x="${x}" y="${H-ih}" width="${bw}" height="${ih}" rx="3" fill="#1D9E75" opacity=".85"/>`;
+    bars+=`<rect x="${x+bw+2}" y="${H-eh}" width="${bw}" height="${eh}" rx="3" fill="#D85A30" opacity=".8"/>`;
+    xlbls+=`<text x="${x+bw}" y="${H+12}" text-anchor="middle" font-size="8" fill="var(--muted)" font-family="Inter">${MC[h.m]}</text>`;
   });
+  const svgW=hist.length*(bw*2+gap)-gap+8;
 
-  // Donut helper
-  function donut(items,total,size=90){
-    if(!total)return`<svg width="${size}" height="${size}"></svg>`;
-    let angle=-90,paths="";
-    items.forEach(([cat,val],i)=>{
-      const pct=val/total;
-      const a1=angle*Math.PI/180,a2=(angle+pct*360)*Math.PI/180;
-      const r=size/2-6,cx=size/2,cy=size/2;
-      const x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
-      const x2=cx+r*Math.cos(a2),y2=cy+r*Math.sin(a2);
-      paths+=`<path d="M${cx},${cy} L${x1.toFixed(1)},${y1.toFixed(1)} A${r},${r} 0 ${pct>0.5?1:0},1 ${x2.toFixed(1)},${y2.toFixed(1)} Z" fill="${COLORS[i%COLORS.length]}" opacity=".92"/>`;
-      angle+=pct*360;
-    });
-    return`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${paths}<circle cx="${size/2}" cy="${size/2}" r="${size/2-20}" fill="var(--surface)"/></svg>`;
+  // ── PRÓXIMOS VENCIMIENTOS ──
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const vencs=gasM.filter(g=>!g.pagado&&g.venc).map(g=>{
+    const vd=new Date(g.venc+"T00:00:00");
+    const dias=Math.round((vd-hoy)/86400000);
+    return{...g,vd,dias};
+  }).sort((a,b)=>a.dias-b.dias).slice(0,5);
+  const vencHtml=vencs.length?`<div class="card" style="border-left:3px solid var(--red)">
+    <div class="card-title">⏰ Próximos vencimientos</div>
+    ${vencs.map(v=>{
+      const col=v.dias<0?"var(--red)":v.dias<=3?"var(--amber)":"var(--muted)";
+      const lbl=v.dias<0?`Vencido hace ${-v.dias}d`:v.dias===0?"Vence HOY":`En ${v.dias}d`;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">
+        <div style="min-width:0;flex:1">
+          <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.desc}</div>
+          <div style="font-size:9px;color:${col};font-weight:700">${lbl} · ${v.vd.toLocaleDateString("es-AR")}</div>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:${col};flex-shrink:0">${fmt(v.monto)}</span>
+      </div>`;}).join("")}
+  </div>`:"";
+
+  // ── PROYECCIÓN DE CIERRE (solo si es el mes real en curso) ──
+  const esActual=mes===new Date().getMonth()&&anio===new Date().getFullYear();
+  let proyHtml="";
+  if(esActual){
+    const diaHoy=new Date().getDate();
+    const diasMes=new Date(anio,mes+1,0).getDate();
+    if(diaHoy>=3){
+      const ritmo=(s.totGas+s.totTC)/diaHoy;
+      const proyGas=Math.round(ritmo*diasMes);
+      const proyDisp=s.totIngConf-proyGas-s.totSavMes;
+      proyHtml=`<div class="card" style="border-left:3px solid var(--indigo)">
+        <div class="card-title">🔮 Proyección de cierre · día ${diaHoy}/${diasMes}</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+          <span style="color:var(--muted)">Gasto proyectado fin de mes</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--red)">${fmt(proyGas)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px">
+          <span style="color:var(--muted)">Disponible proyectado</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${proyDisp>=0?"var(--green)":"var(--red)"}">${fmt(proyDisp)}</span>
+        </div>
+        <div style="font-size:9px;color:var(--muted);margin-top:5px">Al ritmo actual de ${fmt(Math.round(ritmo))}/día</div>
+      </div>`;
+    }
   }
 
-  // Gastos banco del mes por cat
-  const gasBancoMes=s.gasM.filter(g=>(g.medio||"banco")==="banco");
-  const totGasBanco=gasBancoMes.reduce((x,g)=>x+g.monto,0)+s.totTC;
-  const catBancoMap={};
-  gasBancoMes.forEach(g=>{catBancoMap[g.cat]=(catBancoMap[g.cat]||0)+g.monto;});
-  if(s.totTC>0)catBancoMap["Tarjetas"]=s.totTC;
-  const catBanco=Object.entries(catBancoMap).sort((a,b)=>b[1]-a[1]).slice(0,7);
-
-  // Gastos efectivo del mes por cat
-  const gasEfecMes=s.gasM.filter(g=>g.medio==="efectivo");
-  const totGasEfec=gasEfecMes.reduce((x,g)=>x+g.monto,0);
-  const catEfecMap={};
-  gasEfecMes.forEach(g=>{catEfecMap[g.cat]=(catEfecMap[g.cat]||0)+g.monto;});
-  const catEfec=Object.entries(catEfecMap).sort((a,b)=>b[1]-a[1]).slice(0,7);
-
-  function donutLegend(cats,total){
-    return cats.map(([cat,val],i)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">
-      <span style="width:8px;height:8px;border-radius:2px;background:${COLORS[i%COLORS.length]};flex-shrink:0"></span>
-      <span style="font-size:9px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">${cat}</span>
-      <span style="font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--muted)">${total?Math.round(val/total*100):0}%</span>
-    </div>`).join("");
-  }
+  // ── COMPARATIVA VS MES ANTERIOR ──
+  let pm=mes-1,pa=anio;if(pm<0){pm=11;pa--;}
+  const gasPrev=D.gastos.filter(g=>g.mes===pm&&g.anio===pa);
+  const grpPrev=grp=>gasPrev.filter(g=>GRUPOS[grp].includes(g.cat)).reduce((x,g)=>x+g.monto,0);
+  const cmp=[["Impuestos",totImpuestos,grpPrev("impuestos"),"#BA7517"],
+             ["G. fijos",totFijos,grpPrev("fijos"),"#185FA5"],
+             ["G. variables",totVariables,grpPrev("variables"),"#534AB7"]];
+  const cmpRows=cmp.filter(([,c,p])=>c>0||p>0).map(([lbl,cur,prev,col])=>{
+    const varPct=prev>0?Math.round((cur-prev)/prev*100):null;
+    const arrow=varPct===null?"":varPct>0?`▲ +${varPct}%`:varPct<0?`▼ ${varPct}%`:"= 0%";
+    const arrCol=varPct===null?"var(--muted)":varPct>10?"var(--red)":varPct<-10?"var(--green)":"var(--muted)";
+    return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:4px 0">
+      <span style="display:flex;align-items:center;gap:5px"><span class="dot" style="background:${col}"></span>${lbl}</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:600">${fmt(cur)}</span>
+        <span style="font-size:9px;font-weight:700;color:${arrCol};min-width:48px;text-align:right">${arrow||"s/d"}</span>
+      </div>
+    </div>`;}).join("");
+  const compHtml=cmpRows?`<div class="card">
+    <div class="card-title">📊 Variación vs ${MC[pm]}</div>
+    ${cmpRows}
+  </div>`:"";
 
   document.getElementById("page-resumen").innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div class="hero" style="background:${s.dispBanco>=0?"linear-gradient(135deg,#4F46E5,#7C3AED)":"linear-gradient(135deg,#EF4444,#DC2626)"}">
-        <div class="hero-lbl">🏦 Banco real</div>
-        <div class="hero-amt">${fmt(s.dispBanco)}</div>
-        <div class="hero-sub">Solo gastos con ✓ confirmado</div>
-      </div>
-      <div class="hero" style="background:${s.dispEfec>=0?"linear-gradient(135deg,#F59E0B,#D97706)":"linear-gradient(135deg,#EF4444,#DC2626)"}">
-        <div class="hero-lbl">💵 Efectivo real</div>
-        <div class="hero-amt">${fmt(s.dispEfec)}</div>
-        <div class="hero-sub">Solo gastos con ✓ confirmado</div>
-      </div>
-    </div>
-    <div class="g3">
-      <div class="stat"><div class="stat-lbl">💰 Ingresos</div><div class="stat-val" style="color:var(--green)">${fmt(s.totIng)}</div></div>
-      <div class="stat"><div class="stat-lbl">✅ Egr. pagados</div><div class="stat-val" style="color:var(--red)">${fmt(s.totGasPag+s.totTC)}</div></div>
-      <div class="stat"><div class="stat-lbl">🏦 Ahorro</div><div class="stat-val" style="color:var(--indigo)">${fmt(s.totSavMes)}</div></div>
+
+    <!-- ══ INFOGRAFÍA 5 INDICADORES ══ -->
+    <div style="position:relative;width:100%;margin-bottom:14px;overflow:hidden">
+      <svg width="100%" viewBox="0 0 352 530" style="display:block;overflow:visible">
+
+        <!-- ARC decorativo -->
+        <circle cx="18" cy="260" r="105" fill="none" stroke="var(--green-md)"
+          stroke-width="14" stroke-dasharray="255 660" stroke-linecap="round"
+          transform="rotate(-88 18 260)"/>
+        <circle cx="18" cy="260" r="76" fill="none" stroke="var(--green)"
+          stroke-width="8" stroke-dasharray="185 660" stroke-linecap="round"
+          transform="rotate(-88 18 260)"/>
+        <text x="18" y="255" text-anchor="middle" font-size="15" font-weight="700"
+          fill="var(--green)" font-family="Inter">5</text>
+        <text x="18" y="270" text-anchor="middle" font-size="8"
+          fill="var(--green)" font-family="Inter">items</text>
+
+        <!-- LÍNEA GUÍA -->
+        <line x1="80" y1="28" x2="80" y2="468"
+          stroke="var(--border)" stroke-width="1.2" stroke-dasharray="4,4"/>
+
+        <!-- ─ ITEM 1 INGRESOS ─ -->
+        <circle cx="80" cy="50" r="5" fill="#1D9E75"/>
+        <circle cx="100" cy="50" r="14" fill="#1D9E75"/>
+        <text x="100" y="55" text-anchor="middle" font-size="12" font-weight="700"
+          fill="white" font-family="Inter">1</text>
+        <rect x="120" y="28" width="224" height="44" rx="22" fill="#1D9E75"/>
+        <text x="136" y="46" font-size="11" font-weight="600" fill="white" font-family="Inter">Ingresos del mes</text>
+        <text x="336" y="46" text-anchor="end" font-size="11" font-weight="700" fill="white" font-family="Inter">${fmt(s.totIng)}</text>
+        <text x="136" y="61" font-size="9" fill="rgba(255,255,255,.75)" font-family="Inter">✓ Confirmados: ${fmt(s.totIngConf)}</text>
+
+        <!-- ─ ITEM 2 EGRESOS ─ -->
+        <circle cx="80" cy="140" r="5" fill="#D85A30"/>
+        <circle cx="100" cy="140" r="14" fill="#D85A30"/>
+        <text x="100" y="145" text-anchor="middle" font-size="12" font-weight="700"
+          fill="white" font-family="Inter">2</text>
+        <rect x="120" y="118" width="224" height="44" rx="22" fill="#D85A30"/>
+        <text x="136" y="136" font-size="11" font-weight="600" fill="white" font-family="Inter">Egresos pagados</text>
+        <text x="336" y="136" text-anchor="end" font-size="11" font-weight="700" fill="white" font-family="Inter">${fmt(s.totGasPag+s.totTC)}</text>
+        <text x="136" y="151" font-size="9" fill="rgba(255,255,255,.75)" font-family="Inter">Solo con ✓ · ${pctEgr}% del ingreso</text>
+        <!-- barra progreso -->
+        <rect x="136" y="165" width="180" height="3" rx="2" fill="rgba(216,90,48,.2)"/>
+        <rect x="136" y="165" width="${Math.min(pctEgrW,180)}" height="3" rx="2" fill="#D85A30"/>
+
+        <!-- ─ ITEM 3 IMPUESTOS ─ -->
+        <circle cx="80" cy="240" r="5" fill="#BA7517"/>
+        <circle cx="100" cy="240" r="14" fill="#BA7517"/>
+        <text x="100" y="245" text-anchor="middle" font-size="12" font-weight="700"
+          fill="white" font-family="Inter">3</text>
+        <rect x="120" y="218" width="224" height="44" rx="22" fill="#BA7517"/>
+        <text x="136" y="236" font-size="11" font-weight="600" fill="white" font-family="Inter">Impuestos</text>
+        <text x="336" y="236" text-anchor="end" font-size="11" font-weight="700" fill="white" font-family="Inter">${fmt(totImpuestos)}</text>
+        <text x="136" y="251" font-size="9" fill="rgba(255,255,255,.75)" font-family="Inter">TGI · Luz · Gas · Sellos · IIBB</text>
+
+        <!-- ─ ITEM 4 GASTOS FIJOS ─ -->
+        <circle cx="80" cy="330" r="5" fill="#185FA5"/>
+        <circle cx="100" cy="330" r="14" fill="#185FA5"/>
+        <text x="100" y="335" text-anchor="middle" font-size="12" font-weight="700"
+          fill="white" font-family="Inter">4</text>
+        <rect x="120" y="308" width="224" height="44" rx="22" fill="#185FA5"/>
+        <text x="136" y="326" font-size="11" font-weight="600" fill="white" font-family="Inter">Gastos fijos</text>
+        <text x="336" y="326" text-anchor="end" font-size="11" font-weight="700" fill="white" font-family="Inter">${fmt(totFijos)}</text>
+        <text x="136" y="341" font-size="9" fill="rgba(255,255,255,.75)" font-family="Inter">Cochera · Salud · Educación · Deporte</text>
+
+        <!-- ─ ITEM 5 GASTOS VARIABLES ─ -->
+        <circle cx="80" cy="420" r="5" fill="#534AB7"/>
+        <circle cx="100" cy="420" r="14" fill="#534AB7"/>
+        <text x="100" y="425" text-anchor="middle" font-size="12" font-weight="700"
+          fill="white" font-family="Inter">5</text>
+        <rect x="120" y="398" width="224" height="44" rx="22" fill="#534AB7"/>
+        <text x="136" y="416" font-size="11" font-weight="600" fill="white" font-family="Inter">Gastos variables</text>
+        <text x="336" y="416" text-anchor="end" font-size="11" font-weight="700" fill="white" font-family="Inter">${fmt(totVariables)}</text>
+        <text x="136" y="431" font-size="9" fill="rgba(255,255,255,.75)" font-family="Inter">Super · Salidas · Compras · Otros</text>
+
+        <!-- ─ DISPONIBLE REAL ─ -->
+        <circle cx="80" cy="468" r="5" fill="#3B6D11"/>
+        <rect x="14" y="478" width="324" height="50" rx="14" fill="#1D9E75"/>
+        <text x="176" y="497" text-anchor="middle" font-size="9" fill="rgba(255,255,255,.7)" font-family="Inter">Disponible real · solo gastos con ✓</text>
+        <text x="176" y="516" text-anchor="middle" font-size="19" font-weight="700" fill="white" font-family="Inter">${fmt(s.dispBanco+s.dispEfec)}</text>
+
+      </svg>
     </div>
 
-    <!-- ESTADO DE PAGOS -->
-    <div class="card" style="background:var(--light);border:none">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Estado de pagos · ${MESES[mes]}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
-        <span style="font-size:12px;color:var(--muted)">Egresos cargados (total)</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text)">${fmt(s.totGas+s.totTC)}</span>
+    <!-- ESTADO PAGOS RÁPIDO -->
+    <div class="card" style="background:var(--light);border:none;padding:10px 13px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+        <span style="color:var(--muted)">Egresos pendientes (aún disponible)</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--green)">${fmt(s.totGas-s.totGasPag)}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
-        <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block"></span>Confirmados ✓ (ya salió)</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red)">− ${fmt(s.totGasPag+s.totTC)}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-size:12px;display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span>Sin confirmar (aún disponible)</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">${fmt(s.totGas-s.totGasPag)}</span>
-      </div>
-      <div style="background:var(--border);height:1px;margin-bottom:10px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">✓ Ing. confirmados</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--green)">${fmt(s.totIngConf)}</div>
-        </div>
-        <div style="background:var(--surface);border-radius:10px;padding:10px;text-align:center">
-          <div style="font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;margin-bottom:4px">⏳ Ing. pendientes</div>
-          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--muted)">${fmt(s.totIng-s.totIngConf)}</div>
-        </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px">
+        <span style="color:var(--muted)">Ahorro del mes</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--indigo)">${fmt(s.totSavMes)}</span>
       </div>
     </div>
+
+    ${vencHtml}
+    ${proyHtml}
+    ${compHtml}
+
+    <!-- GRÁFICO HISTÓRICO -->
     <div class="card">
-      <div class="card-title">Ingresos vs Egresos · últimos 6 meses</div>
-      <svg width="100%" height="${H+20}" viewBox="0 0 ${(bw*2+gap+4)*6} ${H+20}" preserveAspectRatio="none" style="display:block">${bars}${xlabels}</svg>
-      <div style="display:flex;gap:14px;margin-top:4px">
-        <span style="font-size:9px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:6px;background:#10B981;border-radius:2px;display:inline-block;opacity:.85"></span>Ingresos</span>
-        <span style="font-size:9px;color:var(--muted);display:flex;align-items:center;gap:4px"><span style="width:10px;height:6px;background:#EF4444;border-radius:2px;display:inline-block;opacity:.8"></span>Egresos</span>
+      <div class="card-title">Ingresos vs egresos · últimos 6 meses</div>
+      <svg width="100%" height="${H+24}" viewBox="0 0 ${svgW} ${H+24}" preserveAspectRatio="none" style="display:block">
+        ${bars}${xlbls}
+      </svg>
+      <div style="display:flex;gap:14px;margin-top:6px">
+        <span style="font-size:9px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <span style="width:10px;height:6px;background:#1D9E75;border-radius:2px;display:inline-block;opacity:.85"></span>Ingresos</span>
+        <span style="font-size:9px;color:var(--muted);display:flex;align-items:center;gap:4px">
+          <span style="width:10px;height:6px;background:#D85A30;border-radius:2px;display:inline-block;opacity:.8"></span>Egresos</span>
       </div>
     </div>
+
+    <!-- META AHORRO -->
     <div class="card">
       <div class="card-title">🎯 Meta ahorro · ${fmt(META)}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <span style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${s.pctMeta>=100?"var(--green)":"var(--amber)"}">${fmt(s.totSavMes)}</span>
-        <span class="badge ${s.pctMeta>=100?"badge-grn":"badge-amb"}">${s.pctMeta>=100?"✓ Meta":""+Math.round(s.pctMeta)+"%"}</span>
+        <span style="background:${s.pctMeta>=100?"var(--green-lt)":"var(--amber-lt)"};color:${s.pctMeta>=100?"var(--green)":"var(--amber)"};font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px">${s.pctMeta>=100?"✓ Meta":Math.round(s.pctMeta)+"%"}</span>
       </div>
       <div class="prog"><div class="prog-fill" style="width:${s.pctMeta}%;background:${s.pctMeta>=100?"var(--green)":"var(--amber)"}"></div></div>
       <div style="font-size:10px;color:var(--muted);margin-top:4px">${s.pctMeta>=100?`🎉 Sobraron ${fmt(s.totSavMes-META)}`:`Faltan ${fmt(META-s.totSavMes)}`}</div>
     </div>
-    ${s.cats.length?`<div class="card">
-      <div class="card-title">Egresos por categoría</div>
-      ${s.cats.slice(0,6).map(([cat,tot],i)=>{
-        const pct=(tot/(s.totGas+s.totTC||1)*100).toFixed(0);
-        return `<div style="margin-bottom:8px">
-          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
-            <span><span class="dot" style="background:${COLORS[i%COLORS.length]}"></span>${cat}</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:${COLORS[i%COLORS.length]}">${fmt(tot)} <span style="color:var(--muted)">${pct}%</span></span>
-          </div>
-          <div class="cat-bar"><div class="cat-bar-fill" style="width:${pct}%;background:${COLORS[i%COLORS.length]}"></div></div>
-        </div>`;}).join("")}
-    </div>`:""}
-    ${catBanco.length?`<div class="card">
-      <div class="card-title">🏦 En qué se fue el Banco este mes</div>
-      <div style="display:flex;gap:12px;align-items:center">
-        ${donut(catBanco,totGasBanco,96)}
-        <div style="flex:1;min-width:0">
-          ${donutLegend(catBanco,totGasBanco)}
-          <div style="margin-top:6px;font-size:10px;font-weight:700;color:var(--blue)">Total: ${fmt(totGasBanco)}</div>
-        </div>
-      </div>
-    </div>`:""}
-    ${catEfec.length?`<div class="card">
-      <div class="card-title">💵 En qué se fue el Efectivo este mes</div>
-      <div style="display:flex;gap:12px;align-items:center">
-        ${donut(catEfec,totGasEfec,96)}
-        <div style="flex:1;min-width:0">
-          ${donutLegend(catEfec,totGasEfec)}
-          <div style="margin-top:6px;font-size:10px;font-weight:700;color:var(--amber)">Total: ${fmt(totGasEfec)}</div>
-        </div>
-      </div>
-    </div>`:""}
     <div style="margin-bottom:24px"></div>`;
 }
 
@@ -800,6 +955,12 @@ function rEgrBanco(){
         <select class="fsel" id="gb-cat">${CAT_GAS.map(c=>`<option${c===CAT_GAS_DEFAULT?" selected":""}>${c}</option>`).join("")}</select>
         <input class="finp" id="gb-monto" type="number" placeholder="Monto $">
       </div>
+      <div class="frow fg">
+        <div><label style="font-size:9px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">VENCE (opcional)</label>
+          <input class="finp" id="gb-venc" type="date"></div>
+        <div><label style="font-size:9px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">RECURRENTE</label>
+          <button id="gb-rec" class="medio-btn" onclick="window._gbRec=!window._gbRec;this.className='medio-btn'+(window._gbRec?' active-blue':'')" style="height:38px">🔁 Cada mes</button></div>
+      </div>
       <div class="fg">
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px">¿Sale del ahorro?</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
@@ -812,7 +973,7 @@ function rEgrBanco(){
     </div>
     ${catHtml||`<p style="text-align:center;color:var(--muted);font-size:12px;padding:24px 0">Sin egresos bancarios</p>`}
     <div style="margin-bottom:24px"></div>`;
-  window._gbSav="none";
+  window._gbSav="none";window._gbRec=false;
 }
 
 window.setGbSav=function(v){
@@ -837,9 +998,19 @@ window.addGasBanco=function(){
   const monto=parseFloat(document.getElementById("gb-monto").value);
   if(!desc||isNaN(monto)||monto<=0)return;
   const fa=window._gbSav||"none";
+  const venc=document.getElementById("gb-venc")?.value||null;
   const ts=new Date();
-  D.gastos.push({id:Date.now(),desc,cat,monto,mes,anio,medio:"banco",fuenteAhorro:fa,
-    fecha:ts.toLocaleDateString("es-AR"),hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})});
+  const gid=Date.now();
+  const g={id:gid,desc,cat,monto,mes,anio,medio:"banco",fuenteAhorro:fa,venc,
+    fecha:ts.toLocaleDateString("es-AR"),hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})};
+  // Recurrente: crear template
+  if(window._gbRec){
+    if(!D.recurrentes)D.recurrentes=[];
+    const rid="rec"+gid;
+    D.recurrentes.push({id:rid,desc,cat,monto,medio:"banco"});
+    g.recId=rid;
+  }
+  D.gastos.push(g);
   if(fa!=="none")descontarAhorro(fa,monto);
   document.getElementById("gb-desc").value="";
   document.getElementById("gb-monto").value="";
@@ -852,9 +1023,18 @@ window.addGasEfec=function(){
   const monto=parseFloat(document.getElementById("ge-monto").value);
   if(!desc||isNaN(monto)||monto<=0)return;
   const fa=window._geSav||"none";
+  const venc=document.getElementById("ge-venc")?.value||null;
   const ts=new Date();
-  D.gastos.push({id:Date.now(),desc,cat,monto,mes,anio,medio:"efectivo",fuenteAhorro:fa,
-    fecha:ts.toLocaleDateString("es-AR"),hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})});
+  const gid=Date.now();
+  const g={id:gid,desc,cat,monto,mes,anio,medio:"efectivo",fuenteAhorro:fa,venc,
+    fecha:ts.toLocaleDateString("es-AR"),hora:ts.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"})};
+  if(window._geRec){
+    if(!D.recurrentes)D.recurrentes=[];
+    const rid="rec"+gid;
+    D.recurrentes.push({id:rid,desc,cat,monto,medio:"efectivo"});
+    g.recId=rid;
+  }
+  D.gastos.push(g);
   if(fa!=="none")descontarAhorro(fa,monto);
   document.getElementById("ge-desc").value="";
   document.getElementById("ge-monto").value="";
@@ -913,6 +1093,12 @@ function rEgrEfec(){
         <select class="fsel" id="ge-cat">${CAT_GAS.map(c=>`<option${c===CAT_GAS_DEFAULT?" selected":""}>${c}</option>`).join("")}</select>
         <input class="finp" id="ge-monto" type="number" placeholder="Monto $">
       </div>
+      <div class="frow fg">
+        <div><label style="font-size:9px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">VENCE (opcional)</label>
+          <input class="finp" id="ge-venc" type="date"></div>
+        <div><label style="font-size:9px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px">RECURRENTE</label>
+          <button id="ge-rec" class="medio-btn" onclick="window._geRec=!window._geRec;this.className='medio-btn'+(window._geRec?' active-amber':'')" style="height:38px">🔁 Cada mes</button></div>
+      </div>
       <div class="fg">
         <label style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px">¿Sale del ahorro?</label>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
@@ -925,7 +1111,7 @@ function rEgrEfec(){
     </div>
     ${catHtml||`<p style="text-align:center;color:var(--muted);font-size:12px;padding:24px 0">Sin egresos en efectivo</p>`}
     <div style="margin-bottom:24px"></div>`;
-  window._geSav="none";
+  window._geSav="none";window._geRec=false;
 }
 
 // ── EFECTIVO ─────────────────────────────────────────────────────────
@@ -1046,12 +1232,47 @@ function rAhorro(){
     {id:"efectivo",  lbl:"💵 Efectivo",   color:"var(--amber)"},
   ];
 
+  // Fondo de emergencia: objetivo 3x gastos fijos promedio (últimos 3 meses con datos)
+  let fijosSum=0,fijosN=0;
+  for(let i=0;i<3;i++){
+    let fm=mes-i,fa2=anio;while(fm<0){fm+=12;fa2--;}
+    const gf=D.gastos.filter(g=>g.mes===fm&&g.anio===fa2&&GRUPOS.fijos.includes(g.cat)).reduce((x,g)=>x+g.monto,0);
+    if(gf>0){fijosSum+=gf;fijosN++;}
+  }
+  const fijosProm=fijosN>0?fijosSum/fijosN:0;
+  const feMeta=fijosProm*3;
+  const fePct=feMeta>0?Math.min(totAhorrAcum/feMeta*100,100):0;
+
   document.getElementById("page-ahorro").innerHTML=`
     <div class="hero" style="background:linear-gradient(135deg,#10B981,#059669)">
       <div class="hero-lbl">🏦 Ahorro acumulado total</div>
       <div class="hero-amt">${fmt(totAhorrAcum)}</div>
       <div class="hero-sub">Este mes: ${fmt(s.totSavMes)} · Meta: ${fmt(META)}</div>
     </div>
+
+    <!-- ¿DÓNDE ESTÁ TU PLATA? -->
+    <div class="card" style="border-left:3px solid var(--green)">
+      <div class="card-title">📍 ¿Dónde está tu plata? · acumulado histórico</div>
+      <div class="dr"><span class="lbl">🏦 Ahorrado en banco</span><span class="val" style="color:var(--blue)">${fmt(s.ahorroBanco)}</span></div>
+      <div class="dr"><span class="lbl">💵 Ahorrado en efectivo</span><span class="val" style="color:var(--amber)">${fmt(s.ahorroEfec)}</span></div>
+      <hr class="divider">
+      <div class="dr"><span class="lbl">📈 Invertido</span><span class="val" style="color:var(--indigo)">${fmt(s.invertidoAcum)}</span></div>
+      <div class="dr"><span class="lbl">💲 Dolarizado${s.dolarizadoUsd>0?` (USD ${s.dolarizadoUsd.toFixed(0)})`:""}</span><span class="val" style="color:var(--green)">${fmt(s.dolarizadoAcum)}</span></div>
+      <div class="dr bold"><span class="lbl">💧 Líquido sin asignar</span><span class="val" style="color:var(--text)">${fmt(s.ahorroLiquido)}</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:5px">Líquido = ahorro total − invertido − dolarizado</div>
+    </div>
+
+    <!-- FONDO DE EMERGENCIA -->
+    ${feMeta>0?`<div class="card" style="border-left:3px solid var(--amber)">
+      <div class="card-title">🛟 Fondo de emergencia · 3 meses de gastos fijos</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <span style="font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${fePct>=100?"var(--green)":"var(--amber)"}">${fmt(totAhorrAcum)}</span>
+        <span style="font-size:10px;color:var(--muted)">de ${fmt(feMeta)}</span>
+      </div>
+      <div class="prog"><div class="prog-fill" style="width:${fePct}%;background:${fePct>=100?"var(--green)":"var(--amber)"}"></div></div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px">${fePct>=100?"✓ Fondo cubierto":Math.round(fePct)+"% · te faltan "+fmt(feMeta-totAhorrAcum)}</div>
+    </div>`:""}
+
     <div class="card">
       <div class="card-title">💡 Sugerencia: ahorrar el 10%</div>
       <div style="background:var(--indigo-lt);border-radius:var(--r);padding:12px;margin-bottom:0">
@@ -1095,14 +1316,21 @@ function rAhorro(){
           <select class="fsel" id="dest-tipo">${DEST.map(d=>`<option value="${d.id}">${d.lbl}</option>`).join("")}</select>
           <input class="finp" id="dest-monto" type="number" placeholder="Monto $">
         </div>
+        <div class="frow fg">
+          <input class="finp" id="dest-usd" type="number" placeholder="USD (opcional)">
+          <input class="finp" id="dest-tc" type="number" placeholder="TC del día (opcional)">
+        </div>
         <input class="finp" id="dest-nota" placeholder="Nota (ej: Letes, USDT...)" style="margin-bottom:8px">
         <button class="btn btn-ind" onclick="addDestino()">+ Registrar destino</button>
       </div>
       ${destinos.map((d,i)=>{
         const def=DEST.find(x=>x.id===d.tipo)||DEST[0];
         return `<div class="dest-row">
-          <div><span style="font-size:12px">${def.lbl}</span>${d.nota?` <span style="font-size:10px;color:var(--muted)">· ${d.nota}</span>`:""}</div>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="min-width:0;flex:1">
+            <span style="font-size:12px">${def.lbl}</span>${d.nota?` <span style="font-size:10px;color:var(--muted)">· ${d.nota}</span>`:""}
+            ${d.usd?`<div style="font-size:9px;color:var(--green)">USD ${d.usd}${d.tc?` · TC ${fmt(d.tc)}`:""}</div>`:""}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
             <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:${def.color}">${fmt(d.monto)}</span>
             <button class="idel" onclick="delDestino('${key(mes,anio)}',${i})">✕</button>
           </div>
@@ -1131,7 +1359,9 @@ window.addDestino=function(){
   const k=key(mes,anio);
   if(!D.ahorros[k])D.ahorros[k]={principal:0,secundario:0,medioP:"banco",medioS:"efectivo",destinos:[]};
   if(!D.ahorros[k].destinos)D.ahorros[k].destinos=[];
-  D.ahorros[k].destinos.push({tipo,monto,nota,fecha:new Date().toLocaleDateString("es-AR")});
+  const usd=parseFloat(document.getElementById("dest-usd")?.value)||null;
+  const tc=parseFloat(document.getElementById("dest-tc")?.value)||null;
+  D.ahorros[k].destinos.push({tipo,monto,nota,usd,tc,fecha:new Date().toLocaleDateString("es-AR")});
   save();rAhorro();
 }
 window.delDestino=function(k,idx){
@@ -1147,11 +1377,59 @@ function rTC(){
   const ivan=tcM.filter(t=>t.persona==="Ivan");
   const noelia=tcM.filter(t=>t.persona==="Noelia");
 
+  const cuotas=D.cuotas||[];
+  const totCuotasPend=cuotas.reduce((s,c)=>s+(c.monto*(c.total-c.actual)),0);
+
   document.getElementById("page-tc").innerHTML=`
     <div class="hero" style="background:linear-gradient(135deg,#8B5CF6,#6D28D9)">
       <div class="hero-lbl">💳 Tarjetas · ${MESES[mes]} ${anio}</div>
       <div class="hero-amt">${fmt(totTC)}</div>
       <div class="hero-sub">Ivan ${fmt(ivan.reduce((s,t)=>s+(t.total||0),0))} · Noelia ${fmt(noelia.reduce((s,t)=>s+(t.total||0),0))}</div>
+    </div>
+
+    <!-- COSTO DE FINANCIAR -->
+    <div class="card" style="border-left:3px solid var(--red)">
+      <div class="card-title">⚠️ Costo de financiar (pagar el mínimo)</div>
+      <div style="font-size:11px;color:var(--text);line-height:1.5;margin-bottom:8px">
+        Con TEM ~5,8%, financiar <b>$100.000</b> por un mes cuesta <b style="color:var(--red)">~$5.800 de interés</b> + IVA + punitorios si te atrasás.
+      </div>
+      <div style="background:var(--red-lt);border-radius:var(--r);padding:10px;font-size:10px;color:var(--red)">
+        💸 En junio pagaste <b>$195.509</b> entre punitorios e intereses por pagar el mínimo. Pagando el total te ahorrás ese costo todos los meses.
+      </div>
+    </div>
+
+    <!-- CUOTAS PENDIENTES -->
+    <div class="card" style="border-left:3px solid var(--purple)">
+      <div class="card-title">📅 Compras en cuotas · compromisos futuros</div>
+      ${cuotas.length?cuotas.map((c,i)=>{
+        const rest=c.total-c.actual;
+        const pctC=Math.round(c.actual/c.total*100);
+        return `<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:3px">
+            <span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0">${c.desc}</span>
+            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+              <span style="font-size:9px;color:var(--muted)">${c.actual}/${c.total}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--purple)">${fmt(c.monto)}/mes</span>
+              <button class="idel" onclick="delCuota(${i})">✕</button>
+            </div>
+          </div>
+          <div class="prog" style="height:5px"><div class="prog-fill" style="width:${pctC}%;background:var(--purple)"></div></div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px">Restan ${rest} cuotas · ${fmt(c.monto*rest)} comprometido</div>
+        </div>`;}).join("")+`
+        <div style="background:var(--purple-lt);border-radius:var(--r);padding:8px;font-size:10px;color:var(--purple);font-weight:600;text-align:center">
+          Total comprometido a futuro: ${fmt(totCuotasPend)}
+        </div>`
+      :`<p style="font-size:11px;color:var(--muted);text-align:center;padding:6px 0">Sin cuotas registradas</p>`}
+      <div style="background:var(--light);border-radius:var(--r);padding:10px;margin-top:10px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">+ Agregar compra en cuotas</div>
+        <div class="fg"><input class="finp" id="cu-desc" placeholder="Descripción (ej: Zara)"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+          <input class="finp" id="cu-monto" type="number" placeholder="$/cuota">
+          <input class="finp" id="cu-actual" type="number" placeholder="Cuota N°">
+          <input class="finp" id="cu-total" type="number" placeholder="de Total">
+        </div>
+        <button class="btn btn-ghost" style="border-color:var(--purple);color:var(--purple)" onclick="addCuota()">+ Agregar</button>
+      </div>
     </div>
 
     <!-- Subir resumen TC -->
@@ -1239,9 +1517,25 @@ window.delTC=function(id){
   D.tarjetas=D.tarjetas.filter(t=>String(t.id)!==String(id));
   save();renderAll();
 }
+window.addCuota=function(){
+  const desc=document.getElementById("cu-desc").value.trim();
+  const monto=parseFloat(document.getElementById("cu-monto").value);
+  const actual=parseInt(document.getElementById("cu-actual").value);
+  const total=parseInt(document.getElementById("cu-total").value);
+  if(!desc||isNaN(monto)||isNaN(actual)||isNaN(total)||total<1||actual<0||actual>total)return;
+  if(!D.cuotas)D.cuotas=[];
+  D.cuotas.push({desc,monto,actual,total});
+  save();rTC();
+}
+window.delCuota=function(i){
+  if(!D.cuotas)return;
+  D.cuotas.splice(i,1);
+  save();rTC();
+}
 
 function rAjustes(){
   const backups=JSON.parse(localStorage.getItem("fi-backups")||"[]");
+  const recs=D.recurrentes||[];
   document.getElementById("page-ajustes").innerHTML=`
     <div class="card">
       <div class="card-title">Presupuesto mensual</div>
@@ -1249,6 +1543,22 @@ function rAjustes(){
         <span class="lbl">Monto presupuesto</span>
         <input type="number" value="${D.presupuesto||0}" style="width:110px;border:1px solid var(--border);border-radius:7px;padding:4px 8px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text);background:var(--bg);outline:none;text-align:right" onchange="D.presupuesto=Number(this.value);save()">
       </div>
+    </div>
+    <div class="card" style="border-left:3px solid var(--blue)">
+      <div class="card-title">🔁 Gastos recurrentes (${recs.length})</div>
+      <p style="font-size:10px;color:var(--muted);margin-bottom:8px">Se generan automáticamente el 1° de cada mes como pendientes. Se crean al marcar "🔁 Cada mes" en el formulario de egresos.</p>
+      ${recs.length?recs.map((r,i)=>`
+        <div class="dr">
+          <div style="min-width:0;flex:1">
+            <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.desc}</div>
+            <div style="font-size:9px;color:var(--muted)">${r.cat} · ${r.medio==="efectivo"?"💵 Efectivo":"🏦 Banco"}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600">${fmt(r.monto)}</span>
+            <button class="idel" onclick="delRecurrente(${i})">✕</button>
+          </div>
+        </div>`).join("")
+      :`<p style="color:var(--muted);font-size:11px;text-align:center;padding:8px 0">Sin recurrentes configurados</p>`}
     </div>
     <div class="card">
       <div class="card-title">Exportar / Importar</div>
@@ -1295,6 +1605,11 @@ window.restoreBackup=function(i){
 window.delBackup=function(i){
   const bs=JSON.parse(localStorage.getItem("fi-backups")||"[]");
   bs.splice(i,1);localStorage.setItem("fi-backups",JSON.stringify(bs));rAjustes();
+}
+window.delRecurrente=function(i){
+  if(!D.recurrentes)return;
+  D.recurrentes.splice(i,1);
+  save();rAjustes();
 }
 window.setPresCat=function(k,cat,val){
   if(!D.presupuestoCat)D.presupuestoCat={};
